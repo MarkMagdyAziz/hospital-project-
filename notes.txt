@@ -1,0 +1,20 @@
+hospital directory
+
+user => name ,bDay, email , medical report , history, phone ,address ,password ,username ,
+  image   , status , role
+
+all hospital => clinic , reservation 
+
+reservations => patientName , clinic , date , notess
+
+________________________________________________________________________________________________________________________________
+1- UserSchema - Validation
+2- Encrypt password in => pre save
+3- Route
+
+notes :-
+1- 3awez a3mel Strong Password Rate fi el UI
+2- Schea.FindByCredinitials || wla dh esm ana badeh lel function
+3- ana 3amlt token hast5dmo fi eh 
+- deactivate not working
+- auth have issue!
