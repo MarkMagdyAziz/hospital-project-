@@ -1,4 +1,3 @@
-// name, bithday, email, phone, area, password, image, discount level, username, status, role
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -12,7 +11,27 @@ const userSchema = new mongoose.Schema({
     validate(value) {
       if (!validator.isAlphanumeric(value))
         throw new Error(
-          "check if the name contains only en-US chars and numbers"
+          "Error! name should be contains only en-US chars and numbers"
+        );
+    },
+  },
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    validate(v) {
+      if (!validator.isMobilePhone(v, ["ar-EG"]))
+        throw new Error("invalid ar-EG Mobile phone!");
+    },
+  },
+  password: {
+    type: String,
+    trim: true,
+    required: true,
+    validate(v) {
+      if (!validator.isStrongPassword(v, ["returnScore:true"]))
+        throw new Error(
+          "Use Strong password must be include Capital , Small , Special Characters and Numbers"
         );
     },
   },
@@ -35,26 +54,8 @@ const userSchema = new mongoose.Schema({
     },
   },
   history: { type: String },
-  phone: {
-    type: String,
-    required: true,
-    validate(v) {
-      if (!validator.isMobilePhone(v, ["ar-EG"]))
-        throw new Error("invalid ar-EG Mobile phone!");
-    },
-  },
   address: { type: String, trim: true },
-  password: {
-    type: String,
-    trim: true,
-    required: true,
-    validate(v) {
-      if (!validator.isStrongPassword(v, ["returnScore:true"]))
-        throw new Error(
-          "Use Strong password must be include Capital , Small , Special Characters and Numbers"
-        );
-    },
-  },
+
   userName: { type: String, unique: true },
   image: { type: String, trim: true },
   userId: { type: Number, uniqe: true },
@@ -65,18 +66,31 @@ const userSchema = new mongoose.Schema({
       token: { type: String, trim: true },
     },
   ],
+  reservation: {
+    type: mongoose.Schema.Types.ObjectId,
+    // required: true,
+    ref: "Schedule",
+  },
 });
-// userSchema.methods.toJSON = function () {
-//   const user = this.toObject();
-//   delete user.password;
-//   return user;
-// };
+userSchema.virtual("patientSchedule", {
+  ref: "Schedule",
+  localField: "_id",
+  foreignField: "patientId",
+});
+userSchema.methods.toJSON = function () {
+  // convert user data base object to => javascript object
+  // function run every time together with app.use(express.json()); => wana ba5rog bel data
+  const user = this.toObject();
+  delete user.password;
+  return user;
+};
+
 userSchema.pre("save", async function (next) {
   user = this;
   // create userId
-  if (!user.userId) {
+  if (user.userId == undefined || null) {
     lastUser = await User.findOne().sort({ _id: -1 });
-    lastUser ? (user.userId = lastUser.userId + 1) : (user.userId = 1);
+    lastUser ? (user.userId = lastUser.userId + 1) : (user.userId = 100);
   }
   // create userName
   if (!user.userName) user.userName = user._id;
@@ -85,19 +99,23 @@ userSchema.pre("save", async function (next) {
     user.password = await bcrypt.hash(user.password, 10);
   next();
 });
-userSchema.statics.findByCredintials = async (email, password) => {
-  const user = await User.findOne({ email });
-  if (!user) throw new Error("Invalid user email!");
+userSchema.statics.findByCredintials = async (phone, password) => {
+  const user = await User.findOne({ phone });
+  if (!user) throw new Error("Invalid user phone number !");
   if (!user.status) throw new Error("Your account is deactive");
 
   const checkPassword = await bcrypt.compare(password, user.password);
   if (!checkPassword) throw new Error("invalid user Passwrod!");
+  if (user.tokens.length > 5) throw new Error("Maximum 5 devices");
+
   return user;
 };
 userSchema.methods.generateToken = async function () {
   user = this;
   const token = jwt.sign({ _id: user._id.toString() }, process.env.JWTSECRET);
-  user.tokens.concat({ token });
+  // user.tokens.concat({ token });
+  user.tokens = user.tokens.concat({ token: token });
+
   await user.save();
   return token;
 };
