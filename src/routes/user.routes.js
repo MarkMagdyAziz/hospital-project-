@@ -67,7 +67,7 @@ router.get("/user/deactivate/:id", auth, async (req, res) => {
   }
 });
 // loggin
-router.get("/user/login", async (req, res) => {
+router.post("/user/login", async (req, res) => {
   try {
     const user = await User.findByCredintials(
       req.body.phone,
@@ -127,7 +127,7 @@ router.post("/user/logoutall", auth, async (req, res) => {
   } catch (error) {
     res.status(500).send({
       apiStatus: false,
-      message: "Logg from all devices faield!",
+      message: "Logged out from all devices faield!",
       data: error.message,
     });
   }

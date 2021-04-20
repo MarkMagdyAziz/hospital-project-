@@ -59,7 +59,11 @@ const userSchema = new mongoose.Schema({
   userName: { type: String, unique: true },
   image: { type: String, trim: true },
   userId: { type: Number, uniqe: true },
-  role: { type: String, required: true },
+  role: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "UserTypes",
+  },
   status: { type: Boolean, default: false },
   tokens: [
     {
