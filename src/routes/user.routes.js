@@ -23,7 +23,7 @@ router.post("/user/register", async (req, res) => {
   }
 });
 // active user account
-router.get("/user/activate/:id", async (req, res) => {
+router.get("/user/activate/:id", auth, async (req, res) => {
   try {
     const _id = req.params.id;
     const user = await User.findById({ _id });
@@ -89,6 +89,41 @@ router.post("/user/login", async (req, res) => {
     });
   }
 });
+// edit user profile
+router.patch("/user/edit/:id", auth, async (req, res) => {
+  const { id } = req.params;
+  const reqEdits = Object.keys(req.body);
+  const allowed = ["name", "phone", "password"];
+  const isValidUpdates = reqEdits.every((r) => allowed.includes(r));
+  if (!isValidUpdates) throw new Error("invalid updates");
+
+  try {
+    // const user = await User.findByIdAndUpdate(id, req.body, {
+    //   runValidators: true,
+    //   new: true,
+    // });
+
+    const user = await User.findById(id);
+    reqEdits.forEach((r) => {
+      console.log(req);
+      user[r] = req.body[r];
+    });
+
+    await user.save();
+
+    res.status(200).send({
+      apiStatus: true,
+      data: { user },
+      message: "Edit Sucessed !!",
+    });
+  } catch (error) {
+    res.status(500).send({
+      apiStatus: false,
+      data: error.message,
+      message: "edit errorr !!",
+    });
+  }
+});
 //  user profile
 router.get("/user/profile", auth, async (req, res) => {
   res.send(req.user);
@@ -133,7 +168,7 @@ router.post("/user/logoutall", auth, async (req, res) => {
   }
 });
 // get one user
-router.get("/user/single/:id", async (req, res) => {
+router.get("/user/single/:id", auth, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -152,7 +187,7 @@ router.get("/user/single/:id", async (req, res) => {
   }
 });
 // remove one user
-router.post("/user/delete/:id", async (req, res) => {
+router.post("/user/delete/:id", auth, async (req, res) => {
   const { id } = req.params;
   try {
     let user = await User.findByIdAndDelete(id);
@@ -170,43 +205,9 @@ router.post("/user/delete/:id", async (req, res) => {
     });
   }
 });
-// edit user profile
-router.patch("/user/edit/:id", auth, async (req, res) => {
-  const { id } = req.params;
-  const reqEdits = Object.keys(req.body);
-  const allowed = ["name", "phone", "password"];
-  const isValidUpdates = reqEdits.every((r) => allowed.includes(r));
-  if (!isValidUpdates) throw new Error("invalid updates");
 
-  try {
-    // const user = await User.findByIdAndUpdate(id, req.body, {
-    //   runValidators: true,
-    //   new: true,
-    // });
-
-    const user = await User.findById(id);
-    reqEdits.forEach((r) => {
-      console.log(req);
-      user[r] = req.body[r];
-    });
-
-    await user.save();
-
-    res.status(200).send({
-      apiStatus: true,
-      data: { user },
-      message: "Edit Sucessed !!",
-    });
-  } catch (error) {
-    res.status(500).send({
-      apiStatus: false,
-      data: error.message,
-      message: "edit errorr !!",
-    });
-  }
-});
 // get all users
-router.get("/user/userslist", async (req, res) => {
+router.get("/user/userslist", auth, async (req, res) => {
   try {
     const allUsers = await User.find();
     res.status(200).send({
@@ -222,5 +223,4 @@ router.get("/user/userslist", async (req, res) => {
     });
   }
 });
-router.get("/test", auth, (req, res) => res.send("hello"));
 module.exports = router;

@@ -33,6 +33,7 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  workdays: [String],
   availability: {
     type: String,
     enum: ["available", "busy"],

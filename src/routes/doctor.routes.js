@@ -6,14 +6,14 @@ const router = new express.Router();
 // get all doctors
 router.get("/doctor/doctorslist", auth, async (req, res) => {
   try {
-    // Empty `filter` means "match all documents"
-    // Equivalently, User.find() with no arguments and get the same result.
-
     const filter = {};
     const allDrs = await Doctor.find(filter);
-    res.status(500).send({
+
+    const specialists = allDrs.map((doc) => doc.specialist).sort();
+
+    res.status(200).send({
       apiStatus: true,
-      data: { allDrs },
+      data: { allDrs, specialists },
       message: "get Drs Succeeded!",
     });
   } catch (error) {
@@ -21,6 +21,40 @@ router.get("/doctor/doctorslist", auth, async (req, res) => {
       apiStatus: false,
       data: { error },
       message: "get Drs Failed!",
+    });
+  }
+});
+// search
+router.get("/doctor/search", async (req, res) => {
+  const { searchKey, searchBy } = req.body;
+  query = {};
+  query[searchBy] = searchKey;
+
+  // query[searchBy] = ` $all: ${[searchKey]}`;
+
+  // name starts with a letter before 'D' or after 'W'.
+  /**
+   { name: { $lte: 'D' } },
+        { name: { $gte: 'W' } }
+   */
+
+  try {
+    const allDrs = await Doctor.find(query);
+
+    if (!allDrs || allDrs.length === 0) {
+      res.status(400).send({ error: "No doctors was found" });
+    } else {
+      res.status(200).send({
+        apiStatus: true,
+        data: { allDrs },
+        message: "Search Drs Succeeded!",
+      });
+    }
+  } catch (error) {
+    res.status(500).send({
+      apiStatus: false,
+      data: { error },
+      message: "Search Drs Failed!",
     });
   }
 });

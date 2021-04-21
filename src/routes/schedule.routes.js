@@ -56,10 +56,11 @@ router.get("/schedule/allschedule", auth, async (req, res) => {
   try {
     // const schedule = await req.user.populate("patientSchedule").execPopulate();
     const schedule = await Schedule.find();
-    console.log("schedule", schedule);
+    const scheduleAtSort = schedule.map((res) => res.createdAt).sort();
+
     res.status(200).send({
       apiStatus: true,
-      data: schedule,
+      data: { schedule, scheduleAtSort },
       error: " Schedule Done!",
     });
   } catch (error) {
